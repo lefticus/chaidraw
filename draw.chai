@@ -1,0 +1,33 @@
+def draw_line(w, x1, y1, x2, y2, r, g, b)
+{
+  var xs = abs(x1-x2) > abs(y1-y2);
+  var c = max(abs(x1-x2), abs(y1-y2));
+
+  var xstep = (x2 - x1)/double(c);
+  var ystep = (y2 - y1)/double(c);
+
+  for (var i = 0; i <= c; ++i)
+  {
+    draw_pixel(w, int(x1 + xstep * i), int(y1 + ystep * i), r, g, b);
+  }
+}
+
+def plot(w, f, x1, x2)
+{
+  var x = x1;
+  var y = f(x1);
+
+  for (var i = x1 + 1; i < x2; ++i)
+  {
+    var newx = i;
+    var newy = f(i);
+    draw_line(w, x, y, newx, newy, 1.0, 1.0, 1.0);
+    x = newx;
+    y = newy;
+  }
+}
+
+draw_pixel(window, 0,0, 1.0, 1.0, 1.0)
+plot(window, fun(x) { var t = x; (t * t * t)  }, -20, 20); 
+draw_line(window, 0,0, 130, 75, 1.0, 1.0, 0.0);
+
