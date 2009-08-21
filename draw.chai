@@ -16,3 +16,41 @@ def draw_line(context, x1,y1,x2,y2)
   context.stroke();
 }
 
+def draw_grid(context, drawarea)
+{
+  var width = drawarea.get_width();
+  var height = drawarea.get_height();
+
+  context.set_source_rgba(0.0,0.0,0.0,.15);
+
+  context.move_to(-width/2.0, 0.0);
+  context.line_to(width/2.0, 0.0);
+  context.stroke();
+  
+  context.move_to(0.0, height/2.0);
+  context.line_to(0.0, -height/2.0);
+  context.stroke();
+
+  context.set_source_rgba(0.0,0.0,0.0,.04);
+  for (var x = 20.0; x < width/2.0; x += 20.0)
+  {
+    context.move_to(x, height/2.0);
+    context.line_to(x, -height/2.0);
+    context.stroke();
+
+    context.move_to(-x, height/2.0);
+    context.line_to(-x, -height/2.0);
+    context.stroke();
+  }
+
+  for (var y = 20.0; y < height/2.0; y += 20.0)
+  {
+    context.move_to(width/2.0, y);
+    context.line_to(-width/2.0, y);
+    context.stroke();
+
+    context.move_to(width/2.0, -y);
+    context.line_to(-width/2.0, -y);
+    context.stroke();
+  }
+}

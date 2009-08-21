@@ -1,0 +1,3 @@
+This command might help you build it:
+
+g++ chaidraw.cpp -Wall -O3 `pkg-config gtkmm-2.4 --libs --cflags` -I/home/chaiscript/include

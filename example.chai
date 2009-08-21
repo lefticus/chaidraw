@@ -1,0 +1,17 @@
+use("draw.chai");
+
+def draw_function(context, func, x1, x2)
+{
+  for (var x = x1; x < x2; x+=5)
+  {
+    context.draw_circle(x, func(x), 10);
+  }
+}
+
+
+draw_grid(context, drawingarea);
+context.set_color(1,1,0,.25);
+context.draw_circle(0,0,100);
+
+context.set_color(1,0,0,.75);
+draw_function(context, fun(x) { var x2 = (x+40); (x2*x2 / 40) - 50 }, -110, 100); 

@@ -37,6 +37,9 @@ public:
 
   void draw_circle(double x, double y, double radius, double r, double g, double b, double a);
 
+  double get_width();
+  double get_height();
+
 protected:
   //Overridden default signal handlers:
   virtual void on_realize();
@@ -66,16 +69,19 @@ void DrawArea::on_realize()
   Gtk::DrawingArea::on_realize();
 }
 
-void DrawArea::draw_circle(double x, double y, double radius, double r, double g, double b, double a)
-{
-  m_cairo_context->set_source_rgba(r,g,b,a);
-  m_cairo_context->arc(x,y,radius, 0.0, 2 * M_PI);
-  m_cairo_context->fill();
-}
-
 bool DrawArea::on_button_press_event(GdkEventButton*e)
 {
   return true;
+}
+
+double DrawArea::get_width()
+{
+  return get_allocation().get_width();
+}
+
+double DrawArea::get_height()
+{
+  return get_allocation().get_height();
 }
 
 void DrawArea::run_script(const std::string &script)
@@ -83,62 +89,12 @@ void DrawArea::run_script(const std::string &script)
   // we need a ref to the gdkmm window
   Glib::RefPtr<Gdk::Window> window = get_window();
 
-  Gtk::Allocation allocation = get_allocation();
-  const int width = allocation.get_width();
-  const int height = allocation.get_height();
-
-  double displayedwidth;
-  double displayedheight;
-
-  if (width < height)
-  {
-    displayedwidth = 1;
-    displayedheight = 1*height/width;
-  } else {
-    displayedheight = 1;
-    displayedwidth = 1*width/height;
-  }
-
   m_cairo_context = window->create_cairo_context();
   m_cairo_context->save();
-  Cairo::Matrix matrix(1, 0, 0, -1, double(width)/2, double(height/2));
+  Cairo::Matrix matrix(1, 0, 0, -1, double(get_width())/2, double(get_height()/2));
   m_cairo_context->set_matrix(matrix);
   m_cairo_context->set_source_rgba(1.0,1.0,1.0, 1.0);  
   m_cairo_context->paint();
-
-
-  m_cairo_context->set_source_rgba(0,0,0,.15);
-
-  m_cairo_context->move_to(-double(width)/2, 0);
-  m_cairo_context->line_to(double(width)/2, 0);
-  m_cairo_context->stroke();
-  
-  m_cairo_context->move_to(0, double(height)/2);
-  m_cairo_context->line_to(0, -double(height)/2);
-  m_cairo_context->stroke();
-
-  m_cairo_context->set_source_rgba(0,0,0,.04);
-  for (int x = 20; x < width/2; x += 20)
-  {
-    m_cairo_context->move_to(x, double(height)/2);
-    m_cairo_context->line_to(x, -double(height)/2);
-    m_cairo_context->stroke();
-
-    m_cairo_context->move_to(-x, double(height)/2);
-    m_cairo_context->line_to(-x, -double(height)/2);
-    m_cairo_context->stroke();
-  }
-
-  for (int y = 20; y < height/2; y += 20)
-  {
-    m_cairo_context->move_to(double(width)/2, y);
-    m_cairo_context->line_to(-double(width)/2, y);
-    m_cairo_context->stroke();
-
-    m_cairo_context->move_to(double(width)/2, -y);
-    m_cairo_context->line_to(-double(width)/2, -y);
-    m_cairo_context->stroke();
-  }
 
   try {
     using namespace chaiscript;
@@ -146,7 +102,11 @@ void DrawArea::run_script(const std::string &script)
 
     chai.add(fun(&fabs), "abs");
 
+    chai.add(chaiscript::var(this), "drawingarea");
     chai.add(chaiscript::var(m_cairo_context.operator->()), "context");
+
+    chai.add(fun(&DrawArea::get_width), "get_width");
+    chai.add(fun(&DrawArea::get_height), "get_height");
 
     chai.add(fun(&Cairo::Context::arc), "arc");
     chai.add(fun(&Cairo::Context::arc_negative), "arc_negative");
@@ -169,13 +129,13 @@ void DrawArea::run_script(const std::string &script)
     chai.add(fun(&Cairo::Context::set_source_rgb), "set_source_rgb");
     chai.add(fun(&Cairo::Context::set_source_rgba), "set_source_rgba");
 
-
     chai(script);
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
   }
-  m_cairo_context->restore();
 
+
+  m_cairo_context->restore();
   m_cairo_context.clear();
 }
 
