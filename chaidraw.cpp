@@ -143,9 +143,33 @@ void DrawArea::run_script(const std::string &script)
   try {
     using namespace chaiscript;
     chaiscript::ChaiScript chai;
+
     chai.add(fun(&fabs), "abs");
-    chai.add(fun(&DrawArea::draw_circle), "draw_circle");
-    chai.add(chaiscript::var(this), "drawarea");
+
+    chai.add(chaiscript::var(m_cairo_context.operator->()), "context");
+
+    chai.add(fun(&Cairo::Context::arc), "arc");
+    chai.add(fun(&Cairo::Context::arc_negative), "arc_negative");
+    chai.add(fun(&Cairo::Context::begin_new_path), "begin_new_path");
+    chai.add(fun(&Cairo::Context::begin_new_sub_path), "begin_new_sub_path");
+    chai.add(fun(&Cairo::Context::clip), "clip");
+    chai.add(fun(&Cairo::Context::clip_preserve), "clip_preserve");
+    chai.add(fun(&Cairo::Context::close_path), "close_path");
+    chai.add(fun(&Cairo::Context::curve_to), "curve_to");
+    chai.add(fun(&Cairo::Context::fill), "fill");
+    chai.add(fun(&Cairo::Context::fill_preserve), "fill_preserve");
+    chai.add(fun(&Cairo::Context::line_to), "line_to");
+    chai.add(fun(&Cairo::Context::move_to), "move_to");
+    chai.add(fun(&Cairo::Context::paint), "paint");
+    chai.add(fun(&Cairo::Context::rectangle), "rectangle");
+    chai.add(fun(&Cairo::Context::restore), "restore");
+    chai.add(fun(&Cairo::Context::save), "save");
+    chai.add(fun(&Cairo::Context::stroke), "stroke");
+    chai.add(fun(&Cairo::Context::stroke_preserve), "stroke_preserve");
+    chai.add(fun(&Cairo::Context::set_source_rgb), "set_source_rgb");
+    chai.add(fun(&Cairo::Context::set_source_rgba), "set_source_rgba");
+
+
     chai(script);
   } catch (std::exception &e) {
     std::cout << e.what() << std::endl;
