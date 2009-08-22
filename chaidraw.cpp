@@ -13,6 +13,7 @@
 #include <gtkmm/scrolledwindow.h>
 #include <gtkmm/window.h>
 #include <gtkmm/main.h>
+#include <gtkmm/paned.h>
 
 #include <sstream>
 #include <iostream>
@@ -166,7 +167,7 @@ protected:
 
   // Child widgets
   Gtk::VBox m_box0;
-  Gtk::VBox m_box1;
+  Gtk::VPaned m_box1;
   Gtk::HBox m_box2;
 
   Gtk::ScrolledWindow m_scrolledwindow;
@@ -179,7 +180,7 @@ protected:
 
 
 ChaiDraw::ChaiDraw()
-  : m_box0(/*homogeneous*/false, /*spacing*/5), m_box1(false, 5), m_box2(false, 5), 
+  : m_box0(/*homogeneous*/false, /*spacing*/5), m_box1(), m_box2(false, 5), 
     m_scrolledwindow(),
     m_entry(),
     m_button1("Go"), 
@@ -199,8 +200,8 @@ ChaiDraw::ChaiDraw()
   
   // box1
   m_area.set_size_request(300, 300);
-  m_box1.pack_start(m_area, Gtk::PACK_EXPAND_WIDGET, 5);
-  m_box1.pack_start(m_box2, Gtk::PACK_SHRINK, 5);
+  m_box1.add1(m_area);
+  m_box1.add2(m_box2);
     
   // box0
   m_box0.pack_start(m_box1, Gtk::PACK_EXPAND_WIDGET, 5);
