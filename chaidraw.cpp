@@ -224,6 +224,14 @@ void ChaiDraw::on_error_changed(const std::string &err, int line, int column)
 {
   m_sb.pop();
   m_sb.push(err);
+
+  Gtk::TextIter itr = m_entry.get_buffer()->get_iter_at_line_offset(line-1, column-1);
+  Gtk::TextIter itr2(itr);
+  ++itr2;
+
+  m_entry.get_buffer()->select_range(itr, itr2);
+
+  m_entry.scroll_to(itr, 0, .5, 0);
 }
 
 void ChaiDraw::on_error_cleared()
