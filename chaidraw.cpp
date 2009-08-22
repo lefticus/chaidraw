@@ -14,6 +14,7 @@
 #include <gtkmm/window.h>
 #include <gtkmm/main.h>
 #include <gtkmm/paned.h>
+#include <gtkmm/colorbutton.h>
 
 #include <sstream>
 #include <iostream>
@@ -160,7 +161,8 @@ public:
   
 protected:
   //signal handlers:
-  void on_button1_clicked();
+  void on_gobutton_clicked();
+  void on_insertcolor_clicked();
 
   void on_error_changed(const std::string &err, int line, int column);
   void on_error_cleared();
@@ -169,10 +171,14 @@ protected:
   Gtk::VBox m_box0;
   Gtk::VPaned m_box1;
   Gtk::HBox m_box2;
+  Gtk::VBox m_box3;
+  Gtk::HBox m_colorbox;
 
   Gtk::ScrolledWindow m_scrolledwindow;
   Gtk::TextView m_entry;
-  Gtk::Button m_button1;
+  Gtk::Button m_gobutton;
+  Gtk::Button m_insertcolor;
+  Gtk::ColorButton m_colorbutton;
   Gtk::Statusbar m_sb;
 
   DrawArea m_area;
@@ -180,15 +186,28 @@ protected:
 
 
 ChaiDraw::ChaiDraw()
-  : m_box0(/*homogeneous*/false, /*spacing*/5), m_box1(), m_box2(false, 5), 
+  : m_box0(/*homogeneous*/false, /*spacing*/5), m_box1(), m_box2(false, 5), m_box3(false, 5), 
+    m_colorbox(false,0),
     m_scrolledwindow(),
     m_entry(),
-    m_button1("Go"), 
+    m_gobutton("Go"),
+    m_insertcolor("Insert Color"),
     m_sb(), 
     m_area()
 {
+  m_colorbutton.set_use_alpha();
+
+  m_insertcolor.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_insertcolor_clicked));
+
+  m_colorbox.pack_start(m_colorbutton, Gtk::PACK_SHRINK, 0);
+  m_colorbox.pack_start(m_insertcolor, Gtk::PACK_SHRINK, 0);
+
+  // box3
+  m_box3.pack_start(m_gobutton, Gtk::PACK_SHRINK, 5);
+  m_box3.pack_start(m_colorbox, Gtk::PACK_SHRINK, 5); 
+  
   // box2
-  m_button1.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_button1_clicked));
+  m_gobutton.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_gobutton_clicked));
 
   m_area.signal_error_cleared.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_cleared));
   m_area.signal_error_changed.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_changed));
@@ -196,7 +215,7 @@ ChaiDraw::ChaiDraw()
   m_entry.set_size_request(300, 100);
   m_scrolledwindow.add(m_entry);
   m_box2.pack_start(m_scrolledwindow, Gtk::PACK_EXPAND_WIDGET, 5);
-  m_box2.pack_start(m_button1, Gtk::PACK_SHRINK, 5);
+  m_box2.pack_start(m_box3, Gtk::PACK_SHRINK, 5);
   
   // box1
   m_area.set_size_request(300, 300);
@@ -240,14 +259,25 @@ void ChaiDraw::on_error_cleared()
   m_sb.pop();
 }
 
-
-
-void ChaiDraw::on_button1_clicked()
+void ChaiDraw::on_gobutton_clicked()
 {
   m_area.set_script(m_entry.get_buffer()->get_text());
   m_area.queue_draw();
 }
 
+void ChaiDraw::on_insertcolor_clicked()
+{
+  Gdk::Color color = m_colorbutton.get_color();
+
+  std::stringstream ss;
+  ss<<"context.set_color("
+    << color.get_red_p()
+    << ", " << color.get_green_p()
+    << ", " << color.get_blue_p()
+    << ", " << m_colorbutton.get_alpha()/65535.0 << ");";
+
+  m_entry.get_buffer()->insert_at_cursor(ss.str());
+}
 
 int main(int argc, char** argv)
 {
