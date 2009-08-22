@@ -40,6 +40,9 @@ public:
   double get_width();
   double get_height();
 
+  sigc::signal<void, std::string, int, int> signal_error_changed;
+  sigc::signal<void> signal_error_cleared;
+
 protected:
   //Overridden default signal handlers:
   virtual void on_realize();
@@ -130,8 +133,9 @@ void DrawArea::run_script(const std::string &script)
     chai.add(fun(&Cairo::Context::set_source_rgba), "set_source_rgba");
 
     chai(script);
-  } catch (std::exception &e) {
-    std::cout << e.what() << std::endl;
+    signal_error_cleared.emit();
+  } catch (const chaiscript::Eval_Error &e) {
+    signal_error_changed.emit(e.what(), e.position.line, e.position.column);
   }
 
 
@@ -156,6 +160,9 @@ public:
 protected:
   //signal handlers:
   void on_button1_clicked();
+
+  void on_error_changed(const std::string &err, int line, int column);
+  void on_error_cleared();
 
   // Child widgets
   Gtk::VBox m_box0;
@@ -182,6 +189,9 @@ ChaiDraw::ChaiDraw()
   // box2
   m_button1.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_button1_clicked));
 
+  m_area.signal_error_cleared.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_cleared));
+  m_area.signal_error_changed.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_changed));
+
   m_entry.set_size_request(300, 100);
   m_scrolledwindow.add(m_entry);
   m_box2.pack_start(m_scrolledwindow, Gtk::PACK_EXPAND_WIDGET, 5);
@@ -199,12 +209,26 @@ ChaiDraw::ChaiDraw()
   set_border_width(10);
   add(m_box0);
 
+
+  m_entry.get_buffer()->set_text("use(\"draw.chai\");\ncontext.draw_grid(drawingarea);\ncontext.set_color(1.0,.25,.75,.70);\ncontext.draw_circle(50,-20, 35);\n");
+
   show_all();
 }
 
 
 ChaiDraw::~ChaiDraw()
 {
+}
+
+void ChaiDraw::on_error_changed(const std::string &err, int line, int column)
+{
+  m_sb.pop();
+  m_sb.push(err);
+}
+
+void ChaiDraw::on_error_cleared()
+{
+  m_sb.pop();
 }
 
 
