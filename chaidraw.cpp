@@ -168,69 +168,67 @@ protected:
   void on_error_cleared();
 
   // Child widgets
-  Gtk::VBox m_box0;
-  Gtk::VPaned m_box1;
-  Gtk::HBox m_box2;
-  Gtk::VBox m_box3;
-  Gtk::HBox m_colorbox;
+  Gtk::VBox m_main_box;
+  Gtk::VPaned m_main_pain;
+  Gtk::HBox m_edit_box;
+  Gtk::VBox m_button_box;
+  Gtk::HBox m_color_box;
 
-  Gtk::ScrolledWindow m_scrolledwindow;
-  Gtk::TextView m_entry;
-  Gtk::Button m_gobutton;
-  Gtk::Button m_insertcolor;
-  Gtk::ColorButton m_colorbutton;
-  Gtk::Statusbar m_sb;
+  Gtk::ScrolledWindow m_code_text_scroll;
+  Gtk::TextView m_code_text;
+  Gtk::Button m_go_btn;
+  Gtk::Button m_insert_color_btn;
+  Gtk::ColorButton m_color_btn;
+  Gtk::Statusbar m_status_bar;
 
   DrawArea m_area;
 };
 
 
 ChaiDraw::ChaiDraw()
-  : m_box0(/*homogeneous*/false, /*spacing*/5), m_box1(), m_box2(false, 5), m_box3(false, 5), 
-    m_colorbox(false,0),
-    m_scrolledwindow(),
-    m_entry(),
-    m_gobutton("Go"),
-    m_insertcolor("Insert Color"),
-    m_sb(), 
-    m_area()
+  : m_main_box(/*homogeneous*/false, /*spacing*/0),
+    m_edit_box(false, 0), 
+    m_button_box(false, 0), 
+    m_color_box(false,0),
+    m_go_btn("Go"),
+    m_insert_color_btn("Insert Color")
 {
-  m_colorbutton.set_use_alpha();
+  m_color_btn.set_use_alpha();
 
-  m_insertcolor.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_insertcolor_clicked));
+  m_insert_color_btn.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_insertcolor_clicked));
 
-  m_colorbox.pack_start(m_colorbutton, Gtk::PACK_SHRINK, 0);
-  m_colorbox.pack_start(m_insertcolor, Gtk::PACK_SHRINK, 0);
+  m_color_box.pack_start(m_color_btn, Gtk::PACK_SHRINK, 0);
+  m_color_box.pack_start(m_insert_color_btn, Gtk::PACK_SHRINK, 0);
 
   // box3
-  m_box3.pack_start(m_gobutton, Gtk::PACK_SHRINK, 5);
-  m_box3.pack_start(m_colorbox, Gtk::PACK_SHRINK, 5); 
+  m_button_box.pack_start(m_go_btn, Gtk::PACK_SHRINK, 5);
+  m_button_box.pack_start(m_color_box, Gtk::PACK_SHRINK, 5); 
   
   // box2
-  m_gobutton.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_gobutton_clicked));
+  m_go_btn.signal_clicked().connect(sigc::mem_fun(*this, &ChaiDraw::on_gobutton_clicked));
 
   m_area.signal_error_cleared.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_cleared));
   m_area.signal_error_changed.connect(sigc::mem_fun(*this, &ChaiDraw::on_error_changed));
 
-  m_entry.set_size_request(300, 100);
-  m_scrolledwindow.add(m_entry);
-  m_box2.pack_start(m_scrolledwindow, Gtk::PACK_EXPAND_WIDGET, 5);
-  m_box2.pack_start(m_box3, Gtk::PACK_SHRINK, 5);
+  m_code_text.set_size_request(300, 100);
+  m_code_text_scroll.add(m_code_text);
+  m_edit_box.pack_start(m_code_text_scroll, Gtk::PACK_EXPAND_WIDGET, 5);
+  m_edit_box.pack_start(m_button_box, Gtk::PACK_SHRINK, 5);
   
   // box1
   m_area.set_size_request(300, 300);
-  m_box1.add1(m_area);
-  m_box1.add2(m_box2);
+  m_main_pain.add1(m_area);
+  m_main_pain.add2(m_edit_box);
     
   // box0
-  m_box0.pack_start(m_box1, Gtk::PACK_EXPAND_WIDGET, 5);
-  m_box0.pack_start(m_sb, Gtk::PACK_SHRINK, 5);
+  m_main_box.pack_start(m_main_pain, Gtk::PACK_EXPAND_WIDGET, 5);
+  m_main_box.pack_start(m_status_bar, Gtk::PACK_SHRINK, 5);
  
   set_border_width(10);
-  add(m_box0);
+  add(m_main_box);
 
 
-  m_entry.get_buffer()->set_text("use(\"draw.chai\");\ncontext.draw_grid(drawingarea);\ncontext.set_color(1.0,.25,.75,.70);\ncontext.draw_circle(50,-20, 35);\n");
+  m_code_text.get_buffer()->set_text("use(\"draw.chai\");\ncontext.draw_grid(drawingarea);\ncontext.set_color(1.0,.25,.75,.70);\ncontext.draw_circle(50,-20, 35);\n");
 
   show_all();
 }
@@ -242,41 +240,41 @@ ChaiDraw::~ChaiDraw()
 
 void ChaiDraw::on_error_changed(const std::string &err, int line, int column)
 {
-  m_sb.pop();
-  m_sb.push(err);
+  m_status_bar.pop();
+  m_status_bar.push(err);
 
-  Gtk::TextIter itr = m_entry.get_buffer()->get_iter_at_line_offset(line-1, column-1);
+  Gtk::TextIter itr = m_code_text.get_buffer()->get_iter_at_line_offset(line-1, column-1);
   Gtk::TextIter itr2(itr);
   ++itr2;
 
-  m_entry.get_buffer()->select_range(itr, itr2);
+  m_code_text.get_buffer()->select_range(itr, itr2);
 
-  m_entry.scroll_to(itr, 0, .5, 0);
+  m_code_text.scroll_to(itr, 0, .5, 0);
 }
 
 void ChaiDraw::on_error_cleared()
 {
-  m_sb.pop();
+  m_status_bar.pop();
 }
 
 void ChaiDraw::on_gobutton_clicked()
 {
-  m_area.set_script(m_entry.get_buffer()->get_text());
+  m_area.set_script(m_code_text.get_buffer()->get_text());
   m_area.queue_draw();
 }
 
 void ChaiDraw::on_insertcolor_clicked()
 {
-  Gdk::Color color = m_colorbutton.get_color();
+  Gdk::Color color = m_color_btn.get_color();
 
   std::stringstream ss;
   ss<<"context.set_color("
     << color.get_red_p()
     << ", " << color.get_green_p()
     << ", " << color.get_blue_p()
-    << ", " << m_colorbutton.get_alpha()/65535.0 << ");";
+    << ", " << m_color_btn.get_alpha()/65535.0 << ");";
 
-  m_entry.get_buffer()->insert_at_cursor(ss.str());
+  m_code_text.get_buffer()->insert_at_cursor(ss.str());
 }
 
 int main(int argc, char** argv)
