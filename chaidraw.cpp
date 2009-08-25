@@ -42,7 +42,7 @@ public:
   double get_width();
   double get_height();
 
-  sigc::signal<void, std::string, int, int> signal_error_changed;
+  sigc::signal<void, std::string, int, int, int, int> signal_error_changed;
   sigc::signal<void> signal_error_cleared;
 
 protected:
@@ -137,7 +137,8 @@ void DrawArea::run_script(const std::string &script)
     chai(script);
     signal_error_cleared.emit();
   } catch (const chaiscript::Eval_Error &e) {
-    signal_error_changed.emit(e.what(), e.position.line, e.position.column);
+    signal_error_changed.emit(e.what(), e.start_position.line, e.start_position.column, 
+        e.end_position.line, e.end_position.column);
   }
 
 
@@ -164,7 +165,7 @@ protected:
   void on_gobutton_clicked();
   void on_insertcolor_clicked();
 
-  void on_error_changed(const std::string &err, int line, int column);
+  void on_error_changed(const std::string &err, int line, int column, int endline, int endcolumn);
   void on_error_cleared();
 
   // Child widgets
@@ -238,14 +239,18 @@ ChaiDraw::~ChaiDraw()
 {
 }
 
-void ChaiDraw::on_error_changed(const std::string &err, int line, int column)
+void ChaiDraw::on_error_changed(const std::string &err, int line, int column, int endline, int endcolumn)
 {
   m_status_bar.pop();
   m_status_bar.push(err);
 
   Gtk::TextIter itr = m_code_text.get_buffer()->get_iter_at_line_offset(line-1, column-1);
-  Gtk::TextIter itr2(itr);
-  ++itr2;
+  Gtk::TextIter itr2 = m_code_text.get_buffer()->get_iter_at_line_offset(endline-1, endcolumn-1);
+
+  if (itr == itr2)
+  {
+    ++itr2;
+  }
 
   m_code_text.get_buffer()->select_range(itr, itr2);
 
