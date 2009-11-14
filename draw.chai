@@ -4,9 +4,24 @@ def draw_circle(context, x, y, radius)
   context.fill();
 }
 
-def set_color(context, r,g,b,a)
+def Color(r, g, b)
 {
-  context.set_source_rgba(double(r),double(g), double(b), double(a));
+  return Color(double(r), double(g), double(b));
+}
+
+def Color(r, g, b, a)
+{
+  return Color(double(r), double(g), double(b), double(a));
+}
+
+def Color::`+`(rhs)
+{
+  return Color(min(this.r + rhs.r, 1.0), min(this.g + rhs.g, 1.0), min(this.b + rhs.b, 1.0), min(this.a + rhs.a, 1.0));
+}
+
+def set_color(context, color)
+{
+  context.set_source_rgba(color.r, color.g, color.b, color.a);
 }
 
 def draw_line(context, x1,y1,x2,y2)

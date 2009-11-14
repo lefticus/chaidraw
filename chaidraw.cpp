@@ -23,6 +23,23 @@
 #include <pangomm/fontdescription.h>
 #include <chaiscript/chaiscript.hpp>
 
+
+struct Color
+{
+  Color(double t_r, double t_g, double t_b)
+    : r(t_r), g(t_g), b(t_b), a(1.0)
+  { }
+
+  Color(double t_r, double t_g, double t_b, double t_a)
+    : r(t_r), g(t_g), b(t_b), a(t_a)
+  { }
+
+  double r;
+  double g;
+  double b;
+  double a;
+};
+
 class DrawArea : public Gtk::DrawingArea
 {
 public:
@@ -104,6 +121,21 @@ void DrawArea::run_script(const std::string &script)
   try {
     using namespace chaiscript;
     chaiscript::ChaiScript chai;
+
+    chai.add(user_type<Color>(), "Color");
+    chai.add(fun(&Color::r), "r");
+    chai.add(fun(&Color::g), "g");
+    chai.add(fun(&Color::b), "b");
+    chai.add(fun(&Color::a), "a");
+    chai.add(bootstrap::copy_constructor<Color>("Color"));
+    chai.add(constructor<Color (double, double, double)>(), "Color");
+    chai.add(constructor<Color (double, double, double, double)>(), "Color");
+
+    chai.add_global_const(const_var(Color(0,0,0,1)), "Black");
+    chai.add_global_const(const_var(Color(1,0,0,1)), "Red");
+    chai.add_global_const(const_var(Color(0,1,0,1)), "Green");
+    chai.add_global_const(const_var(Color(0,0,1,1)), "Blue");
+
 
     chai.add(fun(&fabs), "abs");
 
@@ -229,7 +261,7 @@ ChaiDraw::ChaiDraw()
   add(m_main_box);
 
 
-  m_code_text.get_buffer()->set_text("use(\"draw.chai\");\ncontext.draw_grid(drawingarea);\ncontext.set_color(1.0,.25,.75,.70);\ncontext.draw_circle(50,-20, 35);\n");
+  m_code_text.get_buffer()->set_text("use(\"draw.chai\");\ncontext.draw_grid(drawingarea);\ncontext.set_color(Red);\ncontext.draw_circle(50,-20, 35);\n");
 
   show_all();
 }
@@ -244,17 +276,20 @@ void ChaiDraw::on_error_changed(const std::string &err, int line, int column, in
   m_status_bar.pop();
   m_status_bar.push(err);
 
-  Gtk::TextIter itr = m_code_text.get_buffer()->get_iter_at_line_offset(line-1, column-1);
-  Gtk::TextIter itr2 = m_code_text.get_buffer()->get_iter_at_line_offset(endline-1, endcolumn-1);
+  try {
+    Gtk::TextIter itr = m_code_text.get_buffer()->get_iter_at_line_offset(line-1, column-1);
+    Gtk::TextIter itr2 = m_code_text.get_buffer()->get_iter_at_line_offset(endline-1, endcolumn-1);
 
-  if (itr == itr2)
-  {
-    ++itr2;
+    if (itr == itr2)
+    {
+      ++itr2;
+    }
+
+    m_code_text.get_buffer()->select_range(itr, itr2);
+
+    m_code_text.scroll_to(itr, 0, .5, 0);
+  } catch (const std::exception &) {
   }
-
-  m_code_text.get_buffer()->select_range(itr, itr2);
-
-  m_code_text.scroll_to(itr, 0, .5, 0);
 }
 
 void ChaiDraw::on_error_cleared()
