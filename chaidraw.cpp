@@ -69,14 +69,18 @@ protected:
   virtual bool on_button_press_event(GdkEventButton* event);
 
 private:
+  void chaiscript_initialize();
   Cairo::RefPtr<Cairo::Context> m_cairo_context;
   std::string m_script;
+  chaiscript::ChaiScript m_chai;
+  chaiscript::ChaiScript::State m_saved_state;
 };
 
 
 DrawArea::DrawArea()
 {
   add_events(Gdk::EXPOSURE_MASK|Gdk::BUTTON_PRESS_MASK );
+  chaiscript_initialize();
 }
 
 
@@ -106,6 +110,54 @@ double DrawArea::get_height()
   return get_allocation().get_height();
 }
 
+void DrawArea::chaiscript_initialize()
+{
+  using namespace chaiscript;
+
+  m_chai.add(user_type<Color>(), "Color");
+  m_chai.add(fun(&Color::r), "r");
+  m_chai.add(fun(&Color::g), "g");
+  m_chai.add(fun(&Color::b), "b");
+  m_chai.add(fun(&Color::a), "a");
+  m_chai.add(bootstrap::copy_constructor<Color>("Color"));
+  m_chai.add(constructor<Color (double, double, double)>(), "Color");
+  m_chai.add(constructor<Color (double, double, double, double)>(), "Color");
+
+  m_chai.add_global_const(const_var(Color(0,0,0,1)), "Black");
+  m_chai.add_global_const(const_var(Color(1,0,0,1)), "Red");
+  m_chai.add_global_const(const_var(Color(0,1,0,1)), "Green");
+  m_chai.add_global_const(const_var(Color(0,0,1,1)), "Blue");
+
+
+  m_chai.add(fun(&fabs), "abs");
+
+  m_chai.add(fun(&DrawArea::get_width), "get_width");
+  m_chai.add(fun(&DrawArea::get_height), "get_height");
+
+  m_chai.add(fun(&Cairo::Context::arc), "arc");
+  m_chai.add(fun(&Cairo::Context::arc_negative), "arc_negative");
+  m_chai.add(fun(&Cairo::Context::begin_new_path), "begin_new_path");
+  m_chai.add(fun(&Cairo::Context::begin_new_sub_path), "begin_new_sub_path");
+  m_chai.add(fun(&Cairo::Context::clip), "clip");
+  m_chai.add(fun(&Cairo::Context::clip_preserve), "clip_preserve");
+  m_chai.add(fun(&Cairo::Context::close_path), "close_path");
+  m_chai.add(fun(&Cairo::Context::curve_to), "curve_to");
+  m_chai.add(fun(&Cairo::Context::fill), "fill");
+  m_chai.add(fun(&Cairo::Context::fill_preserve), "fill_preserve");
+  m_chai.add(fun(&Cairo::Context::line_to), "line_to");
+  m_chai.add(fun(&Cairo::Context::move_to), "move_to");
+  m_chai.add(fun(&Cairo::Context::paint), "paint");
+  m_chai.add(fun(&Cairo::Context::rectangle), "rectangle");
+  m_chai.add(fun(&Cairo::Context::restore), "restore");
+  m_chai.add(fun(&Cairo::Context::save), "save");
+  m_chai.add(fun(&Cairo::Context::stroke), "stroke");
+  m_chai.add(fun(&Cairo::Context::stroke_preserve), "stroke_preserve");
+  m_chai.add(fun(&Cairo::Context::set_source_rgb), "set_source_rgb");
+  m_chai.add(fun(&Cairo::Context::set_source_rgba), "set_source_rgba");
+
+  m_saved_state = m_chai.get_state();
+}
+
 void DrawArea::run_script(const std::string &script)
 {
   // we need a ref to the gdkmm window
@@ -119,54 +171,12 @@ void DrawArea::run_script(const std::string &script)
   m_cairo_context->paint();
 
   try {
-    using namespace chaiscript;
-    chaiscript::ChaiScript chai;
+    m_chai.set_state(m_saved_state);
 
-    chai.add(user_type<Color>(), "Color");
-    chai.add(fun(&Color::r), "r");
-    chai.add(fun(&Color::g), "g");
-    chai.add(fun(&Color::b), "b");
-    chai.add(fun(&Color::a), "a");
-    chai.add(bootstrap::copy_constructor<Color>("Color"));
-    chai.add(constructor<Color (double, double, double)>(), "Color");
-    chai.add(constructor<Color (double, double, double, double)>(), "Color");
+    m_chai.add(chaiscript::var(this), "drawingarea");
+    m_chai.add(chaiscript::var(m_cairo_context.operator->()), "context");
 
-    chai.add_global_const(const_var(Color(0,0,0,1)), "Black");
-    chai.add_global_const(const_var(Color(1,0,0,1)), "Red");
-    chai.add_global_const(const_var(Color(0,1,0,1)), "Green");
-    chai.add_global_const(const_var(Color(0,0,1,1)), "Blue");
-
-
-    chai.add(fun(&fabs), "abs");
-
-    chai.add(chaiscript::var(this), "drawingarea");
-    chai.add(chaiscript::var(m_cairo_context.operator->()), "context");
-
-    chai.add(fun(&DrawArea::get_width), "get_width");
-    chai.add(fun(&DrawArea::get_height), "get_height");
-
-    chai.add(fun(&Cairo::Context::arc), "arc");
-    chai.add(fun(&Cairo::Context::arc_negative), "arc_negative");
-    chai.add(fun(&Cairo::Context::begin_new_path), "begin_new_path");
-    chai.add(fun(&Cairo::Context::begin_new_sub_path), "begin_new_sub_path");
-    chai.add(fun(&Cairo::Context::clip), "clip");
-    chai.add(fun(&Cairo::Context::clip_preserve), "clip_preserve");
-    chai.add(fun(&Cairo::Context::close_path), "close_path");
-    chai.add(fun(&Cairo::Context::curve_to), "curve_to");
-    chai.add(fun(&Cairo::Context::fill), "fill");
-    chai.add(fun(&Cairo::Context::fill_preserve), "fill_preserve");
-    chai.add(fun(&Cairo::Context::line_to), "line_to");
-    chai.add(fun(&Cairo::Context::move_to), "move_to");
-    chai.add(fun(&Cairo::Context::paint), "paint");
-    chai.add(fun(&Cairo::Context::rectangle), "rectangle");
-    chai.add(fun(&Cairo::Context::restore), "restore");
-    chai.add(fun(&Cairo::Context::save), "save");
-    chai.add(fun(&Cairo::Context::stroke), "stroke");
-    chai.add(fun(&Cairo::Context::stroke_preserve), "stroke_preserve");
-    chai.add(fun(&Cairo::Context::set_source_rgb), "set_source_rgb");
-    chai.add(fun(&Cairo::Context::set_source_rgba), "set_source_rgba");
-
-    chai(script);
+    m_chai(script);
     signal_error_cleared.emit();
   } catch (const chaiscript::Eval_Error &e) {
     signal_error_changed.emit(e.what(), e.start_position.line, e.start_position.column, 
