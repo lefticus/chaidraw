@@ -1,0 +1,1 @@
+ChaiDraw is a showcase for [ChaiScript](http://www.chaiscript.com). It is meant to demonstrate just how simple ChaiScript is to use and to integrate into your application. Also, it is a simple way to introduce young computers users to programming.
